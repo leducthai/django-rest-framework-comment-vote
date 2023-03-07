@@ -1,0 +1,50 @@
+services:
+
+  cm:
+    build: .
+    depends_on:
+      - db
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"    
+    volumes:
+      - .:/cm
+    ports:
+      - "8000:8000"
+    networks: 
+      cm_nw:
+        ipv4_address: 172.21.0.3
+      mamamia:
+        ipv4_address: 172.23.0.3
+    environment:
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    
+
+  db:
+    image: postgres
+    networks:
+      cm_nw:
+        ipv4_address: 172.21.0.2
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+networks:
+  mamamia:
+    name: "backend_mamamia"
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.23.0.0/16"
+
+  cm_nw:
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.21.0.0/16"
+  
