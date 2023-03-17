@@ -1,9 +1,8 @@
-from django.shortcuts import render
 from rest_framework.views import APIView
 from .models import vote
 from .serializers import vote_serializer
 from rest_framework.response import Response
-
+from rest_framework import generics
 
 # Create your views here.
 class detailVote(APIView):
@@ -19,24 +18,18 @@ class detailVote(APIView):
     def post(self , request , *args , **kwargs):
         user = request.data['user_id']
         pd = request.data['pd_id']
-        v_type = str(request.data['t']) 
         if not pd or not user:
             return Response({"missing" : "missing s.t !!"}, status=400)
         check = vote.objects.filter(user_id= user, pd_id=pd)
-        if v_type == '0' or v_type == 'False':
-            if not check:
-                return Response({"invlid": "you haven't voted for the product!"} , status=400)
-            else:
-                check.delete()
-                return Response({"status" : f"deleted your vote for product id {pd}"} , status= 200)
-
+        if not check:
+            serializer = vote_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response({"status": "you just vote for this product"})
         else:
-            if not check:
-                serializer = vote_serializer(data=request.data)
-                serializer.is_valid()
-                serializer.save()
-                return Response(serializer.data)
-            else:
-                return Response({"invlid": "you have already voted for the product!"} , status=400)
+            check.delete()
+            return Response({"status": "you just unvote this product"})
     
 detail_vote = detailVote.as_view()
+
+        
